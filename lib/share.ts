@@ -15,7 +15,7 @@ const HASH_REGEXP = /[0-9a-f]{10,}/
 // tslint:disable-next-line:no-empty
 const Nop = () => {}
 
-module.exports = function Shared(context: IContext) {
+export default function Shared(context: IContext) {
     const share = {
         setOptions(options: IOptions) {
             if (!options.reportTime) {
@@ -144,17 +144,11 @@ module.exports = function Shared(context: IContext) {
             return content;
         },
 
-        setFs(compiler: any) {
-            if (typeof compiler.outputPath === 'string'
-                && !pathIsAbsolute.posix(compiler.outputPath)
-                && !pathIsAbsolute.win32(compiler.outputPath)) {
-                throw new Error('`output.path` needs to be an absolute path or `/`.');
-            }
-
+        setFs(compiler: webpack.Compiler) {
             // store our files in memory
             let fs;
-            const isMemoryFs = !compiler.compilers
-                && compiler.outputFileSystem instanceof MemoryFileSystem;
+            const isMemoryFs = compiler.outputFileSystem
+                instanceof MemoryFileSystem
             if (isMemoryFs) {
                 fs = compiler.outputFileSystem;
             } else {
@@ -317,4 +311,4 @@ module.exports = function Shared(context: IContext) {
 
     share.startWatch();
     return share;
-};
+}

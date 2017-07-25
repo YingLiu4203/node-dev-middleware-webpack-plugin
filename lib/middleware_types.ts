@@ -60,7 +60,7 @@ export interface IContext {
     options: IOptions,
     callbacks: Array<(...args: any[]) => void>,
     state: boolean,
-    compiler: webpack.ICompiler,
+    compiler: webpack.Compiler,
     watching?: webpack.Watching,
     forceRebuild?: boolean,
     fileSystem?: any,

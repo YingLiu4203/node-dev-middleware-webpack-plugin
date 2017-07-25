@@ -1,31 +1,34 @@
 
 import * as express from 'express'
 import * as mime from 'mime'
+import * as path from 'path'
 import * as webpack from 'webpack'
 
 import getFilenameFromUrl from './get_filename_from_url'
-import { IOptions } from './middleware_types'
+import { IContext, IOptions, IReportOptions } from './middleware_types'
+import Shared from './share'
 
 // var Shared = require("./lib/Shared");
 
 // constructor for the middleware
 export default function(compiler: any, options: IOptions) {
 
-    const context = {
+    const context: IContext = {
         state: false,
-        webpackStats: null,
+        webpackStats: undefined,
         callbacks: [],
         options,
         compiler,
-        watching: null,
+        watching: undefined,
         forceRebuild: false,
     };
-    // var shared = Shared(context);
+    const shared = Shared(context);
 
     // The middleware function
-    function middleware(req: express.Request,
-                        res: express.Response,
-                        next: express.NextFunction,
+    function middleware(
+        req: express.Request,
+        res: express.Response,
+        next: express.NextFunction,
     ) {
         function goNext() {
             if (!context.options.serverSideRender) {
@@ -33,19 +36,18 @@ export default function(compiler: any, options: IOptions) {
             }
 
             return new Promise( (resolve) => {
-                // TODO
-                // shared.ready(function() {
-                //     res.locals.webpackStats = context.webpackStats;
-                //     resolve(next());
-                // }, req);
-            });
+                shared.ready( () => {
+                    res.locals.webpackStats = context.webpackStats;
+                    resolve(next())
+                }, req)
+            })
         }
 
         if (req.method !== "GET") {
             return goNext();
         }
 
-        const filename = getFilenameFromUrl(
+        let filename = getFilenameFromUrl(
             context.options.publicPath, context.compiler, req.url);
         if (filename === false) {
             return goNext()
@@ -55,22 +57,24 @@ export default function(compiler: any, options: IOptions) {
             // shared.handleRequest(filename, processRequest, req);
             function processRequest() {
                 try {
-                    var stat = context.fs.statSync(filename);
+                    let stat: any = context.fileSystem.statSync(filename);
                     if (!stat.isFile()) {
                         if (stat.isDirectory()) {
-                            var index = context.options.index;
+                            let index = context.options.index;
 
                             if (index === undefined || index === true) {
                                 index = "index.html";
                             } else if (!index) {
-                                throw "next";
+                                throw new Error("next");
                             }
 
-                            filename = pathJoin(filename, index);
-                            stat = context.fs.statSync(filename);
-                            if (!stat.isFile()) throw "next";
+                            filename = path.join(filename as string, index);
+                            stat = context.fileSystem.statSync(filename);
+                            if (!stat.isFile()) {
+                                throw new Error("next")
+                            }
                         } else {
-                            throw "next";
+                            throw new Error("next")
                         }
                     }
                 } catch (e) {
@@ -78,22 +82,29 @@ export default function(compiler: any, options: IOptions) {
                 }
 
                 // server content
-                var content = context.fs.readFileSync(filename);
+                let content = context.fileSystem.readFileSync(filename);
                 content = shared.handleRangeHeaders(content, req, res);
-                res.setHeader("Content-Type", mime.lookup(filename) + "; charset=UTF-8");
+                res.setHeader("Content-Type",
+                    mime.lookup(filename as string) + "; charset=UTF-8")
                 res.setHeader("Content-Length", content.length);
-                if (context.options.headers) {
-                    for (var name in context.options.headers) {
-                        res.setHeader(name, context.options.headers[name]);
+                const headers = context.options.headers
+                if (headers) {
+                    for (const name in headers) {
+                        if (headers.hasOwnProperty(name)) {
+                            res.setHeader(name, headers[name])
+                        }
                     }
                 }
                 // Express automatically sets the statusCode to 200, but not all servers do (Koa).
                 res.statusCode = res.statusCode || 200;
-                if (res.send) res.send(content);
-                else res.end(content);
-                resolve();
+                if (res.send) {
+                    res.send(content)
+                } else {
+                    res.end(content)
+                }
+                resolve()
             }
-        });
+        })
     }
 
     // middleware.getFilenameFromUrl = getFilenameFromUrl.bind(
@@ -102,5 +113,5 @@ export default function(compiler: any, options: IOptions) {
     // middleware.invalidate = shared.invalidate
     // middleware.close = shared.close
     // middleware.fileSystem = context.fs
-    return middleware;
+    return middleware
 };
