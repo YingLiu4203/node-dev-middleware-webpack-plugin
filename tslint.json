@@ -1,0 +1,18 @@
+{
+    "defaultSeverity": "error",
+    "extends": [
+        "tslint:recommended"
+    ],
+    "rules": {
+        "quotemark": [
+            "single", 
+            "avoid-escape"
+        ],
+        "semicolon": [
+            "never"
+        ],
+        "object-literal-sort-keys": [
+            false
+        ]
+    }
+}
