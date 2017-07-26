@@ -4,7 +4,7 @@ import * as pathIsAbsolute from 'path-is-absolute'
 import * as parseRange from 'range-parser'
 import * as webpack from 'webpack'
 
-import { IContext, IOptions, IReportOptions } from './middleware_types'
+import { IContext, IConfiguration, IReportArgs } from './middleware_types'
 
 // tslint:disable:no-var-requires
 const MemoryFileSystem = require('memory-fs')
@@ -15,60 +15,60 @@ const HASH_REGEXP = /[0-9a-f]{10,}/
 // tslint:disable-next-line:no-empty
 const Nop = () => {}
 
-export default function Shared(context: IContext) {
+export default function shared(context: IContext) {
     const share = {
-        setOptions(options: IOptions) {
-            if (!options.reportTime) {
-                options.reportTime = false
+        setOptions(config: IConfiguration) {
+            if (!config.reportTime) {
+                config.reportTime = false
             }
-            if (!options.watchOptions) {
-                options.watchOptions = {} as webpack.Options.WatchOptions
+            if (!config.watchOptions) {
+                config.watchOptions = {} as webpack.Options.WatchOptions
             }
-            if (typeof options.reporter !== 'function') {
-                options.reporter = share.defaultReporter
+            if (typeof config.reporter !== 'function') {
+                config.reporter = share.defaultReporter
             }
-            if (typeof options.log !== 'function') {
-                options.log = console.log.bind(console)
-            }
-
-            if (typeof options.warn !== 'function') {
-                options.warn = console.warn.bind(console)
+            if (typeof config.log !== 'function') {
+                config.log = console.log.bind(console)
             }
 
-            if (typeof options.error !== 'function') {
-                options.error = console.error.bind(console)
+            if (typeof config.warn !== 'function') {
+                config.warn = console.warn.bind(console)
             }
 
-            if (!options.watchOptions.aggregateTimeout) {
-                options.watchOptions.aggregateTimeout = 200
+            if (typeof config.error !== 'function') {
+                config.error = console.error.bind(console)
             }
 
-            if (options.stats === 'undefined') {
-                options.stats = {} as webpack.Stats.ToStringOptions
+            if (!config.watchOptions.aggregateTimeout) {
+                config.watchOptions.aggregateTimeout = 200
             }
 
-            const stats = options.stats as webpack.Stats.ToStringOptionsObject
+            if (config.stats === 'undefined') {
+                config.stats = {} as webpack.Stats.ToStringOptions
+            }
+
+            const stats = config.stats as webpack.Stats.ToStringOptionsObject
             if (!stats.context) {
                 stats.context = process.cwd()
             }
 
-            if (options.lazy) {
-                if (typeof options.filename === 'string') {
-                    const str = options.filename
+            if (config.lazy) {
+                if (typeof config.filename === 'string') {
+                    const str = config.filename
                         .replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, '\\$&')
                         .replace(/\\\[[a-z]+\\\]/ig, '.+');
-                    options.filename = new RegExp('^[\/]{0,1}' + str + '$');
+                    config.filename = new RegExp('^[\/]{0,1}' + str + '$');
                 }
             }
             // defining custom MIME type
-            if (options.mimeTypes) {
-                mime.define(options.mimeTypes)
+            if (config.mimeTypes) {
+                mime.define(config.mimeTypes)
             }
 
-            context.options = options
+            context.options = config
         },
 
-        defaultReporter(reporterOptions: IReportOptions) {
+        defaultReporter(reporterOptions: IReportArgs) {
             let time: string = ''
             const state = reporterOptions.state
             const stats = reporterOptions.stats

@@ -1,28 +1,19 @@
-
 import * as express from 'express'
 import * as mime from 'mime'
 import * as path from 'path'
 import * as webpack from 'webpack'
 
+import setContext from './context'
 import getFilenameFromUrl from './get_filename_from_url'
-import { IContext, IOptions, IReportOptions } from './middleware_types'
+import { IConfiguration, IContext, WebpackCompiler } from './middleware_types'
 import Shared from './share'
 
 // var Shared = require("./lib/Shared");
 
 // constructor for the middleware
-export default function(compiler: any, options: IOptions) {
+export default function(compiler: WebpackCompiler, options: IConfiguration) {
 
-    const context: IContext = {
-        state: false,
-        webpackStats: undefined,
-        callbacks: [],
-        options,
-        compiler,
-        watching: undefined,
-        forceRebuild: false,
-    };
-    const shared = Shared(context);
+    const context: IContext = setContext(compiler, options)
 
     // The middleware function
     function middleware(
@@ -114,4 +105,4 @@ export default function(compiler: any, options: IOptions) {
     // middleware.close = shared.close
     // middleware.fileSystem = context.fs
     return middleware
-};
+}

@@ -1,23 +1,34 @@
 import * as webpack from 'webpack'
 
-export interface IReportOptions {
-    stats: webpack.Stats,
+export type FunctionVoid = (...arg: any[]) => void
+
+export type WebpackCompiler = webpack.Compiler | webpack.MultiCompiler
+
+export interface IReporterArgs {
     state: boolean,
-    options: IOptions,
+    stats: webpack.Stats & webpack.Stats.ToStringOptionsObject,
+    options: IConfiguration,
 }
 
-export interface IOptions {
-    // public path is the only required parmater
-    // it has the same meaning as in webpack
-    publicPath: string,
+export type ReportFunction = (args: IReporterArgs) => void
 
-    filename?: string | RegExp,
+export interface IReporterConfig {
+    // whether to add timestamp or not
+    reportTime?: boolean,
 
     // flag to display no info to console (only warnings and errors)
     noInfo?: boolean,
 
     // flag to display to the console
     quiet?: boolean,
+}
+
+export interface IConfiguration extends IReporterConfig {
+    // public path is the only required parmater
+    // it has the same meaning as in webpack
+    publicPath: string,
+
+    filename?: string | RegExp,
 
     // switch into lazy mode
     // that means no watching, but recompilation on every request
@@ -34,9 +45,10 @@ export interface IOptions {
     // custom headers
     headers?: { [key: string]: string },
 
-    log?: (...args: any[]) => void,
-    warn?: (...args: any[]) => void,
-    error?: (...args: any[]) => void,
+    // report functions
+    log?: FunctionVoid,
+    warn?: FunctionVoid,
+    error?: FunctionVoid,
 
     // Add custom mime/extension mappings
     // https://github.com/broofa/node-mime#mimedefine
@@ -47,9 +59,7 @@ export interface IOptions {
     stats?: webpack.Stats.ToStringOptions,
 
     // Provide a custom reporter to change the way how logs are shown.
-    reporter?: (...args: any[]) => void,
-
-    reportTime?: boolean,
+    reporter?: ReportFunction,
 
     // Turn off the server-side rendering mode.
     // See Server-Side Rendering part for more info.
@@ -57,12 +67,12 @@ export interface IOptions {
 }
 
 export interface IContext {
-    options: IOptions,
-    callbacks: Array<(...args: any[]) => void>,
+    options: IConfiguration,
+    callbacks: FunctionVoid[],
     state: boolean,
-    compiler: webpack.Compiler,
+    compiler: WebpackCompiler,
     watching?: webpack.Watching,
     forceRebuild?: boolean,
     fileSystem?: any,
-    webpackStats?: webpack.Stats,
+    webpackStats?: webpack.Stats.ToStringOptionsObject,
 }
