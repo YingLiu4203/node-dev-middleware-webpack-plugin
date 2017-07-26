@@ -67,7 +67,6 @@ export interface IConfiguration extends IReporterConfig {
 }
 
 export interface IContext {
-    options: IConfiguration,
     callbacks: FunctionVoid[],
     state: boolean,
     compiler: WebpackCompiler,

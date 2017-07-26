@@ -3,31 +3,51 @@ import * as mime from 'mime'
 import * as path from 'path'
 import * as webpack from 'webpack'
 
+import {
+    FunctionVoid, IConfiguration,
+    IContext, WebpackCompiler,
+} from './expressMiddleware_types'
+
+import initConfig from './config'
 import setContext from './context'
 import getFilenameFromUrl from './get_filename_from_url'
-import { IConfiguration, IContext, WebpackCompiler } from './middleware_types'
 import Shared from './share'
 
 // var Shared = require("./lib/Shared");
 
-// constructor for the middleware
+// constructor for the expressMiddleware
 export default function(compiler: WebpackCompiler, options: IConfiguration) {
+    initConfig(options)
+    const context: IContext = setContext(compiler)
 
-    const context: IContext = setContext(compiler, options)
+    /**
+     * run the function if context stats is ready, otherwise, save to callbacks
+     * @param fn the function to be executed
+     * @param req the epxress request
+     */
+    function ready(fn: FunctionVoid, req: express.Request) {
+        if (context.state) {
+            return fn(context.webpackStats)
+        }
 
-    // The middleware function
-    function middleware(
+        if (!options.noInfo && !options.quiet) {
+            options.log!("webpack: wait until bundle finished: " + (req.url || fn.name))
+        }
+        context.callbacks.push(fn)
+    }
+
+    // The expressMiddleware function
+    function expressMiddleware(
         req: express.Request,
         res: express.Response,
-        next: express.NextFunction,
-    ) {
+        next: express.NextFunction ) {
         function goNext() {
-            if (!context.options.serverSideRender) {
+            if (!options.serverSideRender) {
                 return next()
             }
 
-            return new Promise( (resolve) => {
-                shared.ready( () => {
+            return new Promise<void>((resolve) => {
+                ready(() => {
                     res.locals.webpackStats = context.webpackStats;
                     resolve(next())
                 }, req)
@@ -38,20 +58,19 @@ export default function(compiler: WebpackCompiler, options: IConfiguration) {
             return goNext();
         }
 
-        let filename = getFilenameFromUrl(
-            context.options.publicPath, context.compiler, req.url);
+        let filename = getFilenameFromUrl(options.publicPath, context.compiler, req.url)
         if (filename === false) {
             return goNext()
         }
 
-        return new Promise( (resolve) => {
+        return new Promise<void>((resolve) => {
             // shared.handleRequest(filename, processRequest, req);
             function processRequest() {
                 try {
                     let stat: any = context.fileSystem.statSync(filename);
                     if (!stat.isFile()) {
                         if (stat.isDirectory()) {
-                            let index = context.options.index;
+                            let index = options.index;
 
                             if (index === undefined || index === true) {
                                 index = "index.html";
@@ -74,11 +93,11 @@ export default function(compiler: WebpackCompiler, options: IConfiguration) {
 
                 // server content
                 let content = context.fileSystem.readFileSync(filename);
-                content = shared.handleRangeHeaders(content, req, res);
+                content = 'abc' // shared.handleRangeHeaders(content, req, res);
                 res.setHeader("Content-Type",
                     mime.lookup(filename as string) + "; charset=UTF-8")
                 res.setHeader("Content-Length", content.length);
-                const headers = context.options.headers
+                const headers = options.headers
                 if (headers) {
                     for (const name in headers) {
                         if (headers.hasOwnProperty(name)) {
@@ -98,11 +117,11 @@ export default function(compiler: WebpackCompiler, options: IConfiguration) {
         })
     }
 
-    // middleware.getFilenameFromUrl = getFilenameFromUrl.bind(
+    // expressMiddleware.getFilenameFromUrl = getFilenameFromUrl.bind(
     //     this, context.options.publicPath, context.compiler)
-    // middleware.waitUntilValid = shared.waitUntilValid
-    // middleware.invalidate = shared.invalidate
-    // middleware.close = shared.close
-    // middleware.fileSystem = context.fs
-    return middleware
+    // expressMiddleware.waitUntilValid = shared.waitUntilValid
+    // expressMiddleware.invalidate = shared.invalidate
+    // expressMiddleware.close = shared.close
+    // expressMiddleware.fileSystem = context.fs
+    return expressMiddleware
 }

@@ -19,14 +19,12 @@ function setFs(compiler: WebpackCompiler) {
     return filesystem
 }
 
-export default function setContext(compiler: WebpackCompiler, options: IConfiguration): IContext {
-    initConfig(options)
+export default function setContext(compiler: WebpackCompiler): IContext {
     const filesystem = setFs(compiler)
     return {
         state: false,
         webpackStats: undefined,
         callbacks: [],
-        options,
         compiler,
         watching: undefined,
         forceRebuild: false,

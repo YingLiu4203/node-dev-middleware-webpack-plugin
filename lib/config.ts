@@ -6,59 +6,59 @@ const timestamp = require('time-stamp')
 
 import { IConfiguration, ReportFunction } from './middleware_types'
 
-function configReporter(config: IConfiguration) {
-    if (typeof config.log !== 'function') {
-        config.log = console.log.bind(console)
+function configReporter(options: IConfiguration) {
+    if (typeof options.log !== 'function') {
+        options.log = console.log.bind(console)
     }
-    if (typeof config.warn !== 'function') {
-        config.warn = console.warn.bind(console)
+    if (typeof options.warn !== 'function') {
+        options.warn = console.warn.bind(console)
     }
 
-    if (typeof config.error !== 'function') {
-        config.error = console.log.bind(console)
+    if (typeof options.error !== 'function') {
+        options.error = console.log.bind(console)
     }
 
     const defaultReporter: ReportFunction = (args) => {
-        const {state, stats, options} = args
+        const {state, stats, options: rptOptions} = args
 
         let time: string = ''
-        if (options.reportTime) {
+        if (rptOptions.reportTime) {
             time = '[' + timestamp('HH:mm:ss') + '] '
         }
 
         if (state) {
-            let displayStats = !options.quiet && stats
+            let displayStats = !rptOptions.quiet && stats
             const isNormal = !(stats.hasErrors() || stats.hasWarnings())
-            if (isNormal && options.noInfo) {
+            if (isNormal && rptOptions.noInfo) {
                 displayStats = false
             }
 
             if (displayStats) {
                 if (stats.hasErrors()) {
-                    config.error!(stats.toString(stats));
+                    options.error!(stats.toString(stats));
                 } else if (stats.hasWarnings()) {
-                    config.warn!(stats.toString(stats));
+                    options.warn!(stats.toString(stats));
                 } else {
-                    config.log!(stats.toString(config.stats));
+                    options.log!(stats.toString(options.stats));
                 }
             }
 
-            if (!options.noInfo && !options.quiet) {
+            if (!rptOptions.noInfo && !rptOptions.quiet) {
                 let msg = 'Compiled successfully.'
                 if (stats.hasErrors()) {
                     msg = 'Failed to compile.'
                 } else if (stats.hasWarnings()) {
                     msg = 'Compiled with warnings.'
                 }
-                config.log!(time + 'webpack: ' + msg)
+                options.log!(time + 'webpack: ' + msg)
             }
         } else {
-            config.log!(time + 'webpack: Compiling...')
+            options.log!(time + 'webpack: Compiling...')
         }
     }
 
-    if (typeof config.reporter !== 'function')  {
-        config.reporter = defaultReporter
+    if (typeof options.reporter !== 'function')  {
+        options.reporter = defaultReporter
     }
 }
 
