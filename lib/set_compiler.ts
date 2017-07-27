@@ -24,27 +24,24 @@ export default function setCompiler(context: IContext, options: IConfiguration) 
     }
 
     function compilerDone(stats: WebpackStats) {
-        // We are now on valid state
         context.state = true
         context.webpackStats = stats
 
         // Do the stuff in nextTick, because bundle may be invalidated
         // if a change happened while compiling
         process.nextTick(() => {
-            // check if still in valid state
-            if (!context.state) {
+            // check if still in invalid state
+            const state = context.state
+            if (!state) {
                 return
             }
 
-            // print webpack output
-            options.reporter!({ state: true, stats, options: getRptOptions(options) })
+            options.reporter!({ state, stats, options: getRptOptions(options) })
 
             // execute callback that are delayed
             const cbs = context.callbacks
             context.callbacks = []
-            cbs.forEach(function continueBecauseBundleAvailable(cb) {
-                cb(stats)
-            })
+            cbs.forEach((cb) => cb(stats))
         })
 
         // In lazy mode, we may issue another rebuild
@@ -56,7 +53,7 @@ export default function setCompiler(context: IContext, options: IConfiguration) 
 
     function compilerInvalid() {
         if (context.state && (!options.noInfo && !options.quiet)) {
-            options.log!('webpack: Compiler Invalid...')
+            options.log!('webpack: Compiler invalid or watch-run or run...')
         }
 
         // We are now in invalid state
@@ -71,7 +68,6 @@ export default function setCompiler(context: IContext, options: IConfiguration) 
 
     function startWatch() {
         const compiler = context.compiler
-        // start watching
         if (!options.lazy) {
             const watching = compiler.watch(options.watchOptions, handleCompilerCallback)
             context.watching = watching
