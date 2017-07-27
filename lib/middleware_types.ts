@@ -69,6 +69,7 @@ export interface IConfiguration extends IReporterConfig {
 
 export interface IContext {
     callbacks: FunctionVoid[],
+    // true if the compiler completes run.
     state: boolean,
     compiler: any,
     watching?: webpack.Watching,

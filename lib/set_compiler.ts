@@ -5,7 +5,8 @@ import { IConfiguration, IContext, WebpackStats } from './middleware_types'
 
 export default function setCompiler(context: IContext, options: IConfiguration) {
 
-    function handleCompilerCallback(err: any) {
+    // used by the compiler's run() and watch methods
+    function handleCompilerCallback(err: any, stats: webpack.Stats) {
         if (err) {
             options.error(err.stack || err)
             if (err.details) {
@@ -28,7 +29,7 @@ export default function setCompiler(context: IContext, options: IConfiguration) 
         context.webpackStats = stats
 
         // Do the stuff in nextTick, because bundle may be invalidated
-        // if a change happened while compiling
+        // if a change may happen in rebuild
         process.nextTick(() => {
             // check if still in invalid state
             const state = context.state
@@ -53,7 +54,7 @@ export default function setCompiler(context: IContext, options: IConfiguration) 
 
     function compilerInvalid() {
         if (context.state && (!options.noInfo && !options.quiet)) {
-            options.log('webpack: Compiler invalid or watch-run or run...')
+            options.log('webpack: state is true, called by invalid or watch-run or run...')
         }
 
         // We are now in invalid state
@@ -68,11 +69,11 @@ export default function setCompiler(context: IContext, options: IConfiguration) 
 
     function startWatch() {
         const compiler = context.compiler
-        if (!options.lazy) {
+        if (options.lazy) {
+            context.state = true
+        } else {
             const watching = compiler.watch(options.watchOptions, handleCompilerCallback)
             context.watching = watching
-        } else {
-            context.state = true
         }
     }
 

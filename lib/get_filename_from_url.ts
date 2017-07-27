@@ -6,7 +6,7 @@ import * as webpack from 'webpack'
 
 import { joinPath } from './file_helper'
 
-function getPaths(publicPath: string, compiler: any, url: string) {
+function getPaths(publicPath: string | undefined, compiler: any, url: string) {
     const compilers = compiler && compiler.compilers
     if (Array.isArray(compilers)) {
         let compilerPublicPath
@@ -28,7 +28,7 @@ function getPaths(publicPath: string, compiler: any, url: string) {
     }
 }
 
-function getFilenameFromUrl(publicPath: string, outputPath: string, url: string) {
+function getFilenameFromUrl(publicPath: string | undefined, outputPath: string, url: string) {
     let filename: string = ''
 
     // localPrefix is the folder our bundle should be in
@@ -60,7 +60,7 @@ function getFilenameFromUrl(publicPath: string, outputPath: string, url: string)
     return querystring.unescape(filename ? joinPath(outputPath, filename) : outputPath)
 }
 
-export default function(publicPath: string, compiler: any, url: string) {
+export default function( publicPath: string | undefined, compiler: any, url: string) {
     const paths = getPaths(publicPath, compiler, url)
-    return getFilenameFromUrl(paths.publicPath, paths.outputPath, url)
+    return getFilenameFromUrl( paths.publicPath, paths.outputPath, url)
 }
