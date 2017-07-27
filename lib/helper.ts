@@ -1,9 +1,10 @@
 import * as express from 'express'
+import * as mime from 'mime'
 import * as parseRange from 'range-parser'
 
 import { IConfiguration, IReporterConfig } from './middleware_types'
 
-export function handleRangeHeaders(
+function handleRangeHeaders(
     content: any, req: express.Request, res: express.Response) {
     // assumes express API
     res.setHeader('Accept-Ranges', 'bytes')
@@ -37,6 +38,33 @@ export function handleRangeHeaders(
         }
     }
     return content
+}
+
+export function sendContent(
+    filename: string,
+    fileSystem: any,
+    req: express.Request,
+    res: express.Response,
+    headers?: { [key: string]: string },
+) {
+    let content = fileSystem.readFileSync(filename)
+    content = handleRangeHeaders(content, req, res)
+    res.setHeader("Content-Type", mime.lookup(filename as string) + " charset=UTF-8")
+    res.setHeader("Content-Length", content.length)
+    if (headers) {
+        for (const name in headers) {
+            if (headers.hasOwnProperty(name)) {
+                res.setHeader(name, headers[name])
+            }
+        }
+    }
+    // Express automatically sets the statusCode to 200, but not all servers do (Koa).
+    res.statusCode = res.statusCode || 200
+    if (res.send) {
+        res.send(content)
+    } else {
+        res.end(content)
+    }
 }
 
 export function getRptOptions(options: IConfiguration): IReporterConfig {

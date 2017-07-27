@@ -65,13 +65,6 @@ function configReporter(options: IConfiguration) {
 export default function initConfig(config: IConfiguration) {
     configReporter(config)
 
-    const watchOptions = config.watchOptions
-        ? config.watchOptions
-        : {} as webpack.Options.WatchOptions
-    if (!watchOptions.aggregateTimeout) {
-        watchOptions.aggregateTimeout = 200
-    }
-
     if (config.stats === 'undefined') {
         config.stats = {} as webpack.Stats.ToStringOptions
     }

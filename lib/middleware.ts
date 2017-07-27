@@ -1,19 +1,26 @@
 import * as express from 'express'
-import * as mime from 'mime'
 import * as path from 'path'
 import * as webpack from 'webpack'
 
-import { FunctionVoid, IConfiguration, IContext, IDevMiddleWare } from './middleware_types'
+import {
+    FunctionVoid,
+    IConfiguration, IContext,
+    IDevMiddleWare,
+} from './middleware_types'
 
 import initConfig from './config'
 import setContext from './context'
+import { getFilename, joinPath } from './file_helper'
 import getFilenameFromUrl from './get_filename_from_url'
-import { handleRangeHeaders } from './helper'
+import { sendContent } from './helper'
 import setCompiler from './set_compiler'
 
 const HASH_REGEXP = /[0-9a-f]{10,}/
 
-// constructor for the expressMiddleware
+// a function that does nothing
+// tslint:disable-next-line:no-empty
+const Nop = () => { }
+
 export default function(this: any, compiler: any, options: IConfiguration) {
     initConfig(options)
     const context: IContext = setContext(compiler)
@@ -43,23 +50,21 @@ export default function(this: any, compiler: any, options: IConfiguration) {
     }
 
     function invalidate(callback: FunctionVoid) {
-        if (callback) {
-            if (context.watching) {
-                ready(callback)
-                context.watching.invalidate()
-            } else {
-                callback()
-            }
+        callback = callback || Nop
+        if (context.watching) {
+            ready(callback)
+            context.watching.invalidate()
+        } else {
+            callback()
         }
     }
 
     function close(callback: FunctionVoid) {
-        if (callback) {
-            if (context.watching) {
-                context.watching.close(callback)
-            } else {
-                callback()
-            }
+        callback = callback || Nop
+        if (context.watching) {
+            context.watching.close(callback)
+        } else {
+            callback()
         }
     }
 
@@ -86,11 +91,12 @@ export default function(this: any, compiler: any, options: IConfiguration) {
         ready(processRequest, req)
     }
 
-    // The expressMiddleware function
+    // The express middleware
     const devMiddleware = ((
         req: express.Request,
         res: express.Response,
         next: express.NextFunction) => {
+
         function goNext() {
             if (!options.serverSideRender) {
                 return next()
@@ -117,51 +123,12 @@ export default function(this: any, compiler: any, options: IConfiguration) {
             handleRequest(filename as string, processRequest, req)
             function processRequest() {
                 try {
-                    let stat: any = context.fileSystem.statSync(filename)
-                    if (!stat.isFile()) {
-                        if (stat.isDirectory()) {
-                            let index = options.index
-
-                            if (index === undefined || index === true) {
-                                index = "index.html"
-                            } else if (!index) {
-                                throw new Error("next")
-                            }
-
-                            filename = path.join(filename as string, index)
-                            stat = context.fileSystem.statSync(filename)
-                            if (!stat.isFile()) {
-                                throw new Error("next")
-                            }
-                        } else {
-                            throw new Error("next")
-                        }
-                    }
+                    filename = getFilename(
+                        filename as string, context.fileSystem, options.index)
                 } catch (e) {
                     return resolve(goNext())
                 }
-
-                // server content
-                let content = context.fileSystem.readFileSync(filename)
-                content = handleRangeHeaders(content, req, res)
-                res.setHeader("Content-Type",
-                    mime.lookup(filename as string) + " charset=UTF-8")
-                res.setHeader("Content-Length", content.length)
-                const headers = options.headers
-                if (headers) {
-                    for (const name in headers) {
-                        if (headers.hasOwnProperty(name)) {
-                            res.setHeader(name, headers[name])
-                        }
-                    }
-                }
-                // Express automatically sets the statusCode to 200, but not all servers do (Koa).
-                res.statusCode = res.statusCode || 200
-                if (res.send) {
-                    res.send(content)
-                } else {
-                    res.end(content)
-                }
+                sendContent(filename, context.fileSystem, req, res, options.headers)
                 resolve()
             }
         })

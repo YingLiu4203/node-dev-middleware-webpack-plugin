@@ -2,7 +2,10 @@ import * as express from 'express'
 import * as webpack from 'webpack'
 
 export type FunctionVoid = (...arg: any[]) => void
+
 export type WebpackStats = webpack.Stats & webpack.Stats.ToStringOptionsObject
+
+export type IAsyncFunctionVoid = (...arg: any[]) => Promise<void> | void
 
 export interface IReporterArgs {
     state: boolean,
@@ -32,7 +35,7 @@ export interface IConfiguration extends IReporterConfig {
 
     // switch into lazy mode
     // that means no watching, but recompilation on every request
-    lazy?: true,
+    lazy?: boolean,
 
     // watch options (only lazy: false)
     watchOptions?: webpack.Options.WatchOptions,
