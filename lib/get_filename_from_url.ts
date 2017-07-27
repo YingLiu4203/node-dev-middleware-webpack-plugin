@@ -4,7 +4,7 @@ import { parse as parseUrl } from 'url'
 
 import * as webpack from 'webpack'
 
-import joinPath from './join_path'
+import { joinPath } from './file_helper'
 
 function getPaths(publicPath: string, compiler: any, url: string) {
     const compilers = compiler && compiler.compilers

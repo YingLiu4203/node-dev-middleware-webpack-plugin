@@ -29,7 +29,7 @@ export interface IReporterConfig {
 export interface IConfiguration extends IReporterConfig {
     // public path is the only required parmater
     // it has the same meaning as in webpack
-    publicPath: string,
+    publicPath?: string,
 
     filename?: string | RegExp,
 
@@ -48,10 +48,11 @@ export interface IConfiguration extends IReporterConfig {
     // custom headers
     headers?: { [key: string]: string },
 
-    // report functions
-    log?: FunctionVoid,
-    warn?: FunctionVoid,
-    error?: FunctionVoid,
+    // report functions and reporter are initialized
+    log: FunctionVoid,
+    warn: FunctionVoid,
+    error: FunctionVoid,
+    reporter: ReportFunction,
 
     // Add custom mime/extension mappings
     // https://github.com/broofa/node-mime#mimedefine
@@ -60,9 +61,6 @@ export interface IConfiguration extends IReporterConfig {
 
     // options for formating the statistics
     stats?: webpack.Stats.ToStringOptions,
-
-    // Provide a custom reporter to change the way how logs are shown.
-    reporter?: ReportFunction,
 
     // Turn off the server-side rendering mode.
     // See Server-Side Rendering part for more info.

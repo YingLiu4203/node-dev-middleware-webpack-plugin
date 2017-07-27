@@ -7,9 +7,9 @@ export default function setCompiler(context: IContext, options: IConfiguration) 
 
     function handleCompilerCallback(err: any) {
         if (err) {
-            options.error!(err.stack || err)
+            options.error(err.stack || err)
             if (err.details) {
-                options.error!(err.details)
+                options.error(err.details)
             }
         }
     }
@@ -53,7 +53,7 @@ export default function setCompiler(context: IContext, options: IConfiguration) 
 
     function compilerInvalid() {
         if (context.state && (!options.noInfo && !options.quiet)) {
-            options.log!('webpack: Compiler invalid or watch-run or run...')
+            options.log('webpack: Compiler invalid or watch-run or run...')
         }
 
         // We are now in invalid state
