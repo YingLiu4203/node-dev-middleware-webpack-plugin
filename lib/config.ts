@@ -4,7 +4,7 @@ import * as webpack from 'webpack'
 // tslint:disable:no-var-requires
 const timestamp = require('time-stamp')
 
-import { IConfiguration, ReportFunction } from './middleware_types'
+import { IConfiguration, ReportFunction, WebpackStats } from './middleware_types'
 
 function configReporter(options: IConfiguration) {
     if (typeof options.log !== 'function') {
@@ -19,7 +19,7 @@ function configReporter(options: IConfiguration) {
     }
 
     const defaultReporter: ReportFunction = (args) => {
-        const {state, stats, options: rptOptions} = args
+        const { state, stats, options: rptOptions } = args
 
         let time: string = ''
         if (rptOptions.reportTime) {
@@ -39,7 +39,7 @@ function configReporter(options: IConfiguration) {
                 } else if (stats.hasWarnings()) {
                     options.warn!(stats.toString(stats));
                 } else {
-                    options.log!(stats.toString(options.stats));
+                    options.log!(stats.toString(stats));
                 }
             }
 
@@ -57,7 +57,7 @@ function configReporter(options: IConfiguration) {
         }
     }
 
-    if (typeof options.reporter !== 'function')  {
+    if (typeof options.reporter !== 'function') {
         options.reporter = defaultReporter
     }
 }
@@ -72,9 +72,10 @@ export default function initConfig(config: IConfiguration) {
         watchOptions.aggregateTimeout = 200
     }
 
-    if (!config.stats) {
-        config.stats = {} as webpack.Stats.ToStringOptionsObject
+    if (config.stats === 'undefined') {
+        config.stats = {} as webpack.Stats.ToStringOptions
     }
+
     if (typeof config.stats === 'object' && !config.stats.context) {
         config.stats.context = process.cwd()
     }

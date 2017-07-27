@@ -1,13 +1,13 @@
+import * as express from 'express'
 import * as webpack from 'webpack'
 
 export type FunctionVoid = (...arg: any[]) => void
-
-export type WebpackCompiler = webpack.Compiler | webpack.MultiCompiler
+export type WebpackStats = webpack.Stats & webpack.Stats.ToStringOptionsObject
 
 export interface IReporterArgs {
     state: boolean,
-    stats: webpack.Stats & webpack.Stats.ToStringOptionsObject,
-    options: IConfiguration,
+    stats: WebpackStats,
+    options: IReporterConfig,
 }
 
 export type ReportFunction = (args: IReporterArgs) => void
@@ -69,9 +69,18 @@ export interface IConfiguration extends IReporterConfig {
 export interface IContext {
     callbacks: FunctionVoid[],
     state: boolean,
-    compiler: WebpackCompiler,
+    compiler: any,
     watching?: webpack.Watching,
     forceRebuild?: boolean,
     fileSystem?: any,
-    webpackStats?: webpack.Stats.ToStringOptionsObject,
+    webpackStats?: WebpackStats,
+}
+
+export interface IDevMiddleWare {
+    (req: express.Request, res: express.Response, next: express.NextFunction): any,
+    fileSystem: any,
+    getFilenameFromUrl: (path: string) => string,
+    waitUntilValid: (fn: FunctionVoid) => void,
+    invalidate: (fn: FunctionVoid) => void,
+    close: (fn: FunctionVoid) => void,
 }

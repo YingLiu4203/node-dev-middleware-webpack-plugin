@@ -3,44 +3,94 @@ import * as mime from 'mime'
 import * as path from 'path'
 import * as webpack from 'webpack'
 
-import {
-    FunctionVoid, IConfiguration,
-    IContext, WebpackCompiler,
-} from './expressMiddleware_types'
+import { FunctionVoid, IConfiguration, IContext, IDevMiddleWare } from './middleware_types'
 
 import initConfig from './config'
 import setContext from './context'
 import getFilenameFromUrl from './get_filename_from_url'
-import Shared from './share'
+import { handleRangeHeaders } from './helper'
+import setCompiler from './set_compiler'
 
-// var Shared = require("./lib/Shared");
+const HASH_REGEXP = /[0-9a-f]{10,}/
 
 // constructor for the expressMiddleware
-export default function(compiler: WebpackCompiler, options: IConfiguration) {
+export default function(this: any, compiler: any, options: IConfiguration) {
     initConfig(options)
     const context: IContext = setContext(compiler)
+    const { rebuild } = setCompiler(context, options)
 
     /**
      * run the function if context stats is ready, otherwise, save to callbacks
      * @param fn the function to be executed
      * @param req the epxress request
      */
-    function ready(fn: FunctionVoid, req: express.Request) {
+    function ready(fn: FunctionVoid, req?: express.Request) {
         if (context.state) {
             return fn(context.webpackStats)
         }
 
         if (!options.noInfo && !options.quiet) {
-            options.log!("webpack: wait until bundle finished: " + (req.url || fn.name))
+            const info = req ? req.url : fn.name
+            options.log!(`webpack: wait until bundle finished: ${info}`)
         }
         context.callbacks.push(fn)
     }
 
+    function waitUntilValid(callback: FunctionVoid) {
+        if (callback) {
+            ready(callback)
+        }
+    }
+
+    function invalidate(callback: FunctionVoid) {
+        if (callback) {
+            if (context.watching) {
+                ready(callback)
+                context.watching.invalidate()
+            } else {
+                callback()
+            }
+        }
+    }
+
+    function close(callback: FunctionVoid) {
+        if (callback) {
+            if (context.watching) {
+                context.watching.close(callback)
+            } else {
+                callback()
+            }
+        }
+    }
+
+    function handleRequest(
+        filename: string,
+        processRequest: () => void,
+        req: express.Request) {
+        // in lazy mode, rebuild on bundle request
+        if (options.lazy && (!options.filename ||
+            (options.filename as RegExp).test(filename))) {
+            rebuild()
+        }
+
+        if (HASH_REGEXP.test(filename)) {
+            try {
+                if (context.fileSystem.statSync(filename).isFile()) {
+                    processRequest()
+                    return
+                }
+                // tslint:disable-next-line:no-empty
+            } catch (e) {
+            }
+        }
+        ready(processRequest, req)
+    }
+
     // The expressMiddleware function
-    function expressMiddleware(
+    const devMiddleware = ((
         req: express.Request,
         res: express.Response,
-        next: express.NextFunction ) {
+        next: express.NextFunction) => {
         function goNext() {
             if (!options.serverSideRender) {
                 return next()
@@ -48,38 +98,38 @@ export default function(compiler: WebpackCompiler, options: IConfiguration) {
 
             return new Promise<void>((resolve) => {
                 ready(() => {
-                    res.locals.webpackStats = context.webpackStats;
+                    res.locals.webpackStats = context.webpackStats
                     resolve(next())
                 }, req)
             })
         }
 
         if (req.method !== "GET") {
-            return goNext();
+            return goNext()
         }
 
         let filename = getFilenameFromUrl(options.publicPath, context.compiler, req.url)
-        if (filename === false) {
+        if (!filename) {
             return goNext()
         }
 
         return new Promise<void>((resolve) => {
-            // shared.handleRequest(filename, processRequest, req);
+            handleRequest(filename as string, processRequest, req)
             function processRequest() {
                 try {
-                    let stat: any = context.fileSystem.statSync(filename);
+                    let stat: any = context.fileSystem.statSync(filename)
                     if (!stat.isFile()) {
                         if (stat.isDirectory()) {
-                            let index = options.index;
+                            let index = options.index
 
                             if (index === undefined || index === true) {
-                                index = "index.html";
+                                index = "index.html"
                             } else if (!index) {
-                                throw new Error("next");
+                                throw new Error("next")
                             }
 
-                            filename = path.join(filename as string, index);
-                            stat = context.fileSystem.statSync(filename);
+                            filename = path.join(filename as string, index)
+                            stat = context.fileSystem.statSync(filename)
                             if (!stat.isFile()) {
                                 throw new Error("next")
                             }
@@ -88,15 +138,15 @@ export default function(compiler: WebpackCompiler, options: IConfiguration) {
                         }
                     }
                 } catch (e) {
-                    return resolve(goNext());
+                    return resolve(goNext())
                 }
 
                 // server content
-                let content = context.fileSystem.readFileSync(filename);
-                content = 'abc' // shared.handleRangeHeaders(content, req, res);
+                let content = context.fileSystem.readFileSync(filename)
+                content = handleRangeHeaders(content, req, res)
                 res.setHeader("Content-Type",
-                    mime.lookup(filename as string) + "; charset=UTF-8")
-                res.setHeader("Content-Length", content.length);
+                    mime.lookup(filename as string) + " charset=UTF-8")
+                res.setHeader("Content-Length", content.length)
                 const headers = options.headers
                 if (headers) {
                     for (const name in headers) {
@@ -106,7 +156,7 @@ export default function(compiler: WebpackCompiler, options: IConfiguration) {
                     }
                 }
                 // Express automatically sets the statusCode to 200, but not all servers do (Koa).
-                res.statusCode = res.statusCode || 200;
+                res.statusCode = res.statusCode || 200
                 if (res.send) {
                     res.send(content)
                 } else {
@@ -115,13 +165,14 @@ export default function(compiler: WebpackCompiler, options: IConfiguration) {
                 resolve()
             }
         })
-    }
+    }) as IDevMiddleWare
 
-    // expressMiddleware.getFilenameFromUrl = getFilenameFromUrl.bind(
-    //     this, context.options.publicPath, context.compiler)
-    // expressMiddleware.waitUntilValid = shared.waitUntilValid
-    // expressMiddleware.invalidate = shared.invalidate
-    // expressMiddleware.close = shared.close
-    // expressMiddleware.fileSystem = context.fs
-    return expressMiddleware
+    devMiddleware.waitUntilValid = waitUntilValid
+    devMiddleware.invalidate = invalidate
+    devMiddleware.close = close
+    devMiddleware.getFilenameFromUrl =
+        getFilenameFromUrl.bind(this, options.publicPath, context.compiler)
+    devMiddleware.fileSystem = context.fileSystem
+
+    return devMiddleware
 }
