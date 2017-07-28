@@ -65,8 +65,8 @@ export default function(context: IContext, options: IConfiguration) {
         processRequest: () => void,
         req: express.Request) {
         // in lazy mode, rebuild on bundle request
-        if (options.lazy && (!options.filename ||
-            (options.filename as RegExp).test(filename))) {
+        const match = !options.filename || (options.filename as RegExp).test(filename)
+        if (options.lazy && match) {
             rebuild()
         }
 

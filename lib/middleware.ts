@@ -9,7 +9,7 @@ import {
 
 import initConfig from './config'
 import setContext from './context'
-import { sendContent } from './express_helper'
+import sendContent from './express_helper'
 import { getFilename, joinPath } from './file_helper'
 import getFilenameFromUrl from './get_filename_from_url'
 import setMiddleware from './set_middleware'
@@ -50,11 +50,11 @@ export default function(this: any, compiler: any, options: IConfiguration) {
         return new Promise<void>((resolve) => {
             function processRequest() {
                 try {
-                    filename = getFilename(
-                        filename as string, context.fileSystem, options.index)
+                    filename = getFilename(filename as string, context.fileSystem, options.index)
                 } catch (e) {
                     return resolve(goNext())
                 }
+
                 sendContent(filename, context.fileSystem, req, res, options.headers)
                 resolve()
             }

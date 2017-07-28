@@ -40,7 +40,7 @@ function handleRangeHeaders(
     return content
 }
 
-export function sendContent(
+export default function sendContent(
     filename: string,
     fileSystem: any,
     req: express.Request,
