@@ -1,16 +1,23 @@
 import * as webpack from 'webpack'
 
-import { getRptOptions } from './helper'
 import { IConfiguration, IContext, WebpackStats } from './middleware_types'
 
 export default function setCompiler(context: IContext, options: IConfiguration) {
 
     // used by the compiler's run() and watch methods
-    function handleCompilerCallback(err: any, stats: webpack.Stats) {
+    function reportCompilerError(err: any, stats?: webpack.Stats) {
         if (err) {
             options.error(err.stack || err)
             if (err.details) {
                 options.error(err.details)
+            }
+            return
+        }
+
+        if (stats) {
+            const info = stats.toJson();
+            if (stats.hasErrors()) {
+                options.error(info.errors)
             }
         }
     }
@@ -18,7 +25,7 @@ export default function setCompiler(context: IContext, options: IConfiguration) 
     function rebuild() {
         if (context.state) {
             context.state = false
-            context.compiler.run(handleCompilerCallback)
+            context.compiler.run(reportCompilerError)
         } else {
             context.forceRebuild = true
         }
@@ -37,7 +44,8 @@ export default function setCompiler(context: IContext, options: IConfiguration) 
                 return
             }
 
-            options.reporter!({ state, stats, options: getRptOptions(options) })
+            const { reportTime, noInfo, quiet } = options
+            options.reporter!({ state, stats, options: { reportTime, noInfo, quiet } })
 
             // execute callback that are delayed
             const cbs = context.callbacks
@@ -67,22 +75,25 @@ export default function setCompiler(context: IContext, options: IConfiguration) 
         }
     }
 
-    function startWatch() {
+    function setPlugins() {
+        context.compiler.plugin("done", compilerDone)
+        context.compiler.plugin("invalid", compilerInvalid)
+        context.compiler.plugin("watch-run", compilerInvalid)
+        context.compiler.plugin("run", compilerInvalid)
+    }
+
+    function start() {
         const compiler = context.compiler
         if (options.lazy) {
             context.state = true
         } else {
-            const watching = compiler.watch(options.watchOptions, handleCompilerCallback)
+            const watching = compiler.watch(options.watchOptions, reportCompilerError)
             context.watching = watching
         }
     }
 
-    context.compiler.plugin("done", compilerDone)
-    context.compiler.plugin("invalid", compilerInvalid)
-    context.compiler.plugin("watch-run", compilerInvalid)
-    context.compiler.plugin("run", compilerInvalid)
-
-    startWatch()
+    setPlugins()
+    start()
 
     return { rebuild }
 }

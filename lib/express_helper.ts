@@ -66,8 +66,3 @@ export function sendContent(
         res.end(content)
     }
 }
-
-export function getRptOptions(options: IConfiguration): IReporterConfig {
-    const { reportTime, noInfo, quiet } = options
-    return { reportTime, noInfo, quiet }
-}

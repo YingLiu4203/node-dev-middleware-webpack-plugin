@@ -1,5 +1,4 @@
 import * as express from 'express'
-import * as path from 'path'
 import * as webpack from 'webpack'
 
 import {
@@ -10,86 +9,15 @@ import {
 
 import initConfig from './config'
 import setContext from './context'
+import { sendContent } from './express_helper'
 import { getFilename, joinPath } from './file_helper'
 import getFilenameFromUrl from './get_filename_from_url'
-import { sendContent } from './helper'
-import setCompiler from './set_compiler'
-
-const HASH_REGEXP = /[0-9a-f]{10,}/
-
-// a function that does nothing
-// tslint:disable-next-line:no-empty
-const Nop = () => { }
+import setMiddleware from './set_middleware'
 
 export default function(this: any, compiler: any, options: IConfiguration) {
     initConfig(options)
     const context: IContext = setContext(compiler)
-    const { rebuild } = setCompiler(context, options)
-
-    /**
-     * run the function if context stats is ready, otherwise, save to callbacks
-     * @param fn the function to be executed
-     * @param req the epxress request
-     */
-    function ready(fn: FunctionVoid, req?: express.Request) {
-        if (context.state) {
-            return fn(context.webpackStats)
-        }
-
-        if (!options.noInfo && !options.quiet) {
-            const info = req ? req.url : fn.name
-            options.log(`webpack: wait until bundle finished: ${info}`)
-        }
-        context.callbacks.push(fn)
-    }
-
-    function waitUntilValid(callback: FunctionVoid) {
-        if (callback) {
-            ready(callback)
-        }
-    }
-
-    function invalidate(callback: FunctionVoid) {
-        callback = callback || Nop
-        if (context.watching) {
-            ready(callback)
-            context.watching.invalidate()
-        } else {
-            callback()
-        }
-    }
-
-    function close(callback: FunctionVoid) {
-        callback = callback || Nop
-        if (context.watching) {
-            context.watching.close(callback)
-        } else {
-            callback()
-        }
-    }
-
-    function handleRequest(
-        filename: string,
-        processRequest: () => void,
-        req: express.Request) {
-        // in lazy mode, rebuild on bundle request
-        if (options.lazy && (!options.filename ||
-            (options.filename as RegExp).test(filename))) {
-            rebuild()
-        }
-
-        if (HASH_REGEXP.test(filename)) {
-            try {
-                if (context.fileSystem.statSync(filename).isFile()) {
-                    processRequest()
-                    return
-                }
-                // tslint:disable-next-line:no-empty
-            } catch (e) {
-            }
-        }
-        ready(processRequest, req)
-    }
+    const { ready, handleRequest, setProps } = setMiddleware(context, options)
 
     // The express middleware
     const devMiddleware = ((
@@ -98,16 +26,16 @@ export default function(this: any, compiler: any, options: IConfiguration) {
         next: express.NextFunction) => {
 
         function goNext() {
-            if (!options.serverSideRender) {
+            if (options.serverSideRender) {
+                return new Promise<void>((resolve) => {
+                    ready(() => {
+                        res.locals.webpackStats = context.webpackStats
+                        resolve(next())
+                    }, req)
+                })
+            } else {
                 return next()
             }
-
-            return new Promise<void>((resolve) => {
-                ready(() => {
-                    res.locals.webpackStats = context.webpackStats
-                    resolve(next())
-                }, req)
-            })
         }
 
         if (req.method !== "GET") {
@@ -120,7 +48,6 @@ export default function(this: any, compiler: any, options: IConfiguration) {
         }
 
         return new Promise<void>((resolve) => {
-            handleRequest(filename as string, processRequest, req)
             function processRequest() {
                 try {
                     filename = getFilename(
@@ -131,15 +58,11 @@ export default function(this: any, compiler: any, options: IConfiguration) {
                 sendContent(filename, context.fileSystem, req, res, options.headers)
                 resolve()
             }
+
+            handleRequest(filename as string, processRequest, req)
         })
     }) as IDevMiddleWare
 
-    devMiddleware.waitUntilValid = waitUntilValid
-    devMiddleware.invalidate = invalidate
-    devMiddleware.close = close
-    devMiddleware.getFilenameFromUrl =
-        getFilenameFromUrl.bind(this, options.publicPath, context.compiler)
-    devMiddleware.fileSystem = context.fileSystem
-
+    setProps(devMiddleware)
     return devMiddleware
 }
