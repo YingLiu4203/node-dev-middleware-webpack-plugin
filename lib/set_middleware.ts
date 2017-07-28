@@ -70,6 +70,7 @@ export default function(context: IContext, options: IConfiguration) {
             rebuild()
         }
 
+        // don't block existing files with a hashed name
         if (HASH_REGEXP.test(filename)) {
             try {
                 if (context.fileSystem.statSync(filename).isFile()) {

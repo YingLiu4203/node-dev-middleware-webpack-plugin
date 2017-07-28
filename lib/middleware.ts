@@ -27,12 +27,10 @@ export default function(this: any, compiler: any, options: IConfiguration) {
 
         function goNext() {
             if (options.serverSideRender) {
-                return new Promise<void>((resolve) => {
-                    ready(() => {
-                        res.locals.webpackStats = context.webpackStats
-                        resolve(next())
-                    }, req)
-                })
+                return ready(() => {
+                    res.locals.webpackStats = context.webpackStats
+                    next()
+                }, req)
             } else {
                 return next()
             }
@@ -47,20 +45,19 @@ export default function(this: any, compiler: any, options: IConfiguration) {
             return goNext()
         }
 
-        return new Promise<void>((resolve) => {
-            function processRequest() {
-                try {
-                    filename = getFilename(filename as string, context.fileSystem, options.index)
-                } catch (e) {
-                    return resolve(goNext())
-                }
-
-                sendContent(filename, context.fileSystem, req, res, options.headers)
-                resolve()
+        function processRequest() {
+            try {
+                filename = getFilename(filename as string, context.fileSystem, options.index)
+            } catch (e) {
+                options.warn("exception throwed in getFilename()")
+                return goNext()
             }
 
-            handleRequest(filename as string, processRequest, req)
-        })
+            sendContent(filename, context.fileSystem, req, res, options.headers)
+        }
+
+        return handleRequest(filename as string, processRequest, req)
+
     }) as IDevMiddleWare
 
     setProps(devMiddleware)

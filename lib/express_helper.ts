@@ -58,11 +58,6 @@ export default function sendContent(
             }
         }
     }
-    // Express automatically sets the statusCode to 200, but not all servers do (Koa).
-    res.statusCode = res.statusCode || 200
-    if (res.send) {
-        res.send(content)
-    } else {
-        res.end(content)
-    }
+
+    res.send(content)
 }
