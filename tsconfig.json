@@ -5,6 +5,7 @@
             "es6"
         ],
         "module": "commonjs",
+        "rootDir": "src",
         "outDir": "./dist",
         "sourceMap": true,
         "strict": true,

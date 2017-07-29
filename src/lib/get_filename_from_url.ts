@@ -40,13 +40,10 @@ function getPaths(publicPath: string, compiler: any, url: string) {
  * @returns {string} The local filename requested by the url. Empty if not matched.
  */
 export default function(cofigPublicPath = '/', compiler: any, url: string): string {
-    let filename = ''
-    url = querystring.unescape(url)
-    const reqestUrl = urlParse(url)
-
     const {publicPath, outputPath} = getPaths(cofigPublicPath, compiler, url)
 
     const configUrl = urlParse(publicPath, false, true)
+    const reqestUrl = urlParse(url)
 
     // match even when one hostname is misssing
     const matchedHostname =
@@ -55,9 +52,11 @@ export default function(cofigPublicPath = '/', compiler: any, url: string): stri
         (reqestUrl.hostname && !configUrl.hostname)
 
     const matchedPathname = reqestUrl.pathname!.indexOf(configUrl.pathname!) === 0
+
+    let filename = ''
     if (matchedHostname && matchedPathname) {
         const strippedUrlPathname = reqestUrl.pathname!.substr(configUrl.pathname!.length)
         filename = joinPath(outputPath, strippedUrlPathname)
     }
-    return filename
+    return querystring.unescape(filename)
 }

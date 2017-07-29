@@ -1,5 +1,5 @@
 export function joinPath(a: string, b: string) {
-    return a === "/" ? "/" + b : (a || "") + "/" + b;
+    return a === "/" ? "/" + b : (a || "") + "/" + b
 }
 
 export function getFilename(
