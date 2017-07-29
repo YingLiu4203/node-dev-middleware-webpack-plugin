@@ -1,5 +1,17 @@
-export function joinPath(a: string, b: string) {
-    return a === "/" ? "/" + b : (a || "") + "/" + b
+/**
+ * Join a prefix with pathname to have exactly one '/' between them
+ * @param {string} a The prefix
+ * @param {string} [b] the pathname, not started with '/'
+ * @returns A joined path with only one '/' between them
+ */
+export function joinPath(a: string, b?: string) {
+    if (a.endsWith('/')) {
+        return a + b
+    } else if (b) {
+        return a + '/' + b
+    } else {
+        return a
+    }
 }
 
 export function getFilename(
