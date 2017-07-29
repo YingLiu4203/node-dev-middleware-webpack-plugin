@@ -27,9 +27,8 @@ export interface IReporterConfig {
 }
 
 export interface IConfiguration extends IReporterConfig {
-    // public path is the only required parmater
-    // it has the same meaning as in webpack
-    publicPath?: string,
+    // it has the same meaning as webpack's publicPath
+    publicPath: string,
 
     filename?: string | RegExp,
 
