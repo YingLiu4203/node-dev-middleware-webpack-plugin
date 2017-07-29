@@ -7,12 +7,12 @@ import * as webpack from 'webpack'
 import { joinPath } from './file_helper'
 
 /**
- * Get the comipler's output path, search if there are multiple compilers.
+ * Get the comipler's output path, search a matched compiler if there are multiple compilers.
  * @param compiler The webpack compiler.
  * @param url The request url.
- * @returns The matched compiler's output path
+ * @returns The matched compiler's output path and public path.
  */
-function getOutputPath(compiler: any, url: string): string {
+function getPaths(publicPath: string, compiler: any, url: string) {
     const compilers = compiler && compiler.compilers
     if (Array.isArray(compilers)) {
         let compilerPublicPath
@@ -21,48 +21,43 @@ function getOutputPath(compiler: any, url: string): string {
                 && element.options.output
                 && element.options.output.publicPath
             if (url.indexOf(compilerPublicPath) === 0) {
-                return element.outputPath
+                return {
+                    publicPath: compilerPublicPath,
+                    outputPath: element.outputPath,
+                }
             }
         }
     }
-    return compiler.outputPath
+    return { publicPath, outputPath: compiler.outputPath }
 }
 
 /**
  * Get the local filename from the request url based on the public path in the middleware
  * configuration and the output path in the webpack configuration.
- * @param {string} [publicPath='/'] The publicPath option in middleware configuration.
+ * @param {string} [cofigPublicPath='/'] The publicPath option in middleware configuration.
  * @param {*} compiler The webpack compiler.
  * @param {string} The request url.
- * @returns {(string | boolean)} The local filename requested by the url.
+ * @returns {string} The local filename requested by the url. Empty if not matched.
  */
-export default function(publicPath = '/', compiler: any, url: string): string | boolean {
-    const configUrl = urlParse(publicPath, false, true)
+export default function(cofigPublicPath = '/', compiler: any, url: string): string {
+    let filename = ''
+    url = querystring.unescape(url)
     const reqestUrl = urlParse(url)
 
-    const outputPath = getOutputPath(compiler, url)
+    const {publicPath, outputPath} = getPaths(cofigPublicPath, compiler, url)
 
-    // both config and request have hostname, fail if they are different
-    if (configUrl.hostname !== null && reqestUrl.hostname !== null &&
-        configUrl.hostname !== reqestUrl.hostname) {
-        return false
-    }
+    const configUrl = urlParse(publicPath, false, true)
 
-    // same hostname but publicPath is not in url, fail
-    if (configUrl.hostname === reqestUrl.hostname && url.indexOf(publicPath) !== 0) {
-        return false
-    }
+    // match even when one hostname is misssing
+    const matchedHostname =
+        (configUrl.hostname === reqestUrl.hostname) ||
+        (!reqestUrl.hostname && configUrl.hostname) ||
+        (reqestUrl.hostname && !configUrl.hostname)
 
-    if (!reqestUrl.hostname && configUrl.hostname && url.indexOf(configUrl.pathname!) !== 0) {
-        return false
-    }
-
-    let filename = outputPath
-    // strip localPrefix from the start of url
-    if (reqestUrl.pathname!.indexOf(configUrl.pathname!) === 0) {
+    const matchedPathname = reqestUrl.pathname!.indexOf(configUrl.pathname!) === 0
+    if (matchedHostname && matchedPathname) {
         const strippedUrlPathname = reqestUrl.pathname!.substr(configUrl.pathname!.length)
         filename = joinPath(outputPath, strippedUrlPathname)
     }
-
-    return querystring.unescape(filename)
+    return filename
 }
