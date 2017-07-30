@@ -39,12 +39,12 @@ export interface IConfiguration extends IReporterConfig {
     // watch options (only lazy: false)
     watchOptions?: webpack.Options.WatchOptions,
 
-    // The index path for web server, defaults to "index.html".
+    // The index filename for web server, defaults to "index.html".
     // If falsy (but not undefined), the server will not respond
     // to requests to the root URL.
     index?: string | boolean,
 
-    // custom headers
+    // custom http response headers
     headers?: { [key: string]: string },
 
     // report functions and reporter are initialized

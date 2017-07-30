@@ -5,11 +5,11 @@ import * as webpack from 'webpack'
 const MemoryFileSystem = require("memory-fs")
 
 import initConfig from './config'
-import { IConfiguration, IContext } from './middleware_types'
+import { IContext } from './middleware_types'
 
-function setFs(compiler: any) {
+function getFs(compiler: any) {
     let filesystem = new MemoryFileSystem()
-    if (compiler instanceof webpack.Compiler) {
+    if (!compiler.compilers && compiler instanceof webpack.Compiler) {
         if (compiler.outputFileSystem instanceof MemoryFileSystem) {
             filesystem = compiler.outputFileSystem
         } else {
@@ -20,7 +20,7 @@ function setFs(compiler: any) {
 }
 
 export default function setContext(compiler: any): IContext {
-    const filesystem = setFs(compiler)
+    const filesystem = getFs(compiler)
     return {
         state: false,
         webpackStats: undefined,
@@ -28,6 +28,6 @@ export default function setContext(compiler: any): IContext {
         compiler,
         watching: undefined,
         forceRebuild: false,
-        fileSystem: setFs(compiler),
+        fileSystem: getFs(compiler),
     }
 }

@@ -5,8 +5,8 @@
   "main": "dist/middleware.js",
   "types": "dist/middleware.d.ts",
   "scripts": {
-    "prepublish": "tsc",
-    "pretest": "tsc",
+    "clean": "rm -rf ./dist",
+    "pretest": "npm run clean && tsc",
     "test": "mocha dist/test"
   },
   "repository": {

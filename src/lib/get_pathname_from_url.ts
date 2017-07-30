@@ -46,7 +46,7 @@ function getPaths(publicPath: string, compiler: any, url: string) {
  * @param {string} cofigPublicPath The publicPath option in middleware configuration.
  * @param {*} compiler The webpack compiler.
  * @param {string} The request url.
- * @returns {string} The local filename requested by the url. Empty if not matched.
+ * @returns {string} The local filename requested by the url. Return an empty string if not matched.
  */
 export default function(cofigPublicPath: string, compiler: any, url: string): string {
     const {publicPath, outputPath} = getPaths(cofigPublicPath, compiler, url)
@@ -63,15 +63,15 @@ export default function(cofigPublicPath: string, compiler: any, url: string): st
 
     const matchedPathname = reqestUrl.pathname!.indexOf(configUrl.pathname!) === 0
 
-    let filename = ''
+    let pathname = ''
     if (matchedHostname && matchedPathname) {
         const strippedUrlPathname = reqestUrl.pathname!.substr(configUrl.pathname!.length)
         if (strippedUrlPathname) {
-            filename = joinPath(outputPath, strippedUrlPathname)
+            pathname = joinPath(outputPath, strippedUrlPathname)
         } else {
-            filename = outputPath
+            pathname = outputPath
         }
     }
 
-    return unescape(filename)
+    return unescape(pathname)
 }

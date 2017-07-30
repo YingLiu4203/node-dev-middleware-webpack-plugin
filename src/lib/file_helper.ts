@@ -14,26 +14,42 @@ export function joinPath(a: string, b?: string) {
     }
 }
 
+/**
+ * Map the request pathname to a local filename.
+ * If the pathname is a file, return it.
+ * Otherwise, return an index file in the folder.
+ * @export
+ * @param {string} pathname The pathname in an http request.
+ * @param {*} fileSystem The file system.
+ * @param {(string | boolean | undefined)} index The index filename. Default is 
+ * @returns a filesystem filename or an
+ * empty string if index is false or pathname is invalid
+ */
 export function getFilename(
-    filename: string,
+    pathname: string,
     fileSystem: any,
     index: string | boolean | undefined) {
-    let stat: any = fileSystem.statSync(filename)
+    let filename = pathname
+    let stat: any = fileSystem.statSync(pathname)
     if (!stat.isFile()) {
         if (stat.isDirectory()) {
             if (index === undefined || index === true) {
                 index = "index.html"
-            } else if (!index) {
-                throw new Error(`invalid option index: ${index}.`)
             }
-            filename = joinPath(filename as string, index)
-            stat = fileSystem.statSync(filename)
-            if (!stat.isFile()) {
-                throw new Error(`Index ${filename} is not file.`)
+
+            if (index) {
+                filename = joinPath(pathname, index as string)
+                stat = fileSystem.statSync(filename)
+                if (!stat.isFile()) {
+                    filename = ''
+                }
+            } else {
+                // index is false in config
+                filename = ''
             }
-        } else {
-            throw new Error(`${filename} is not file or dir.`)
         }
+    } else {
+        filename = ''
     }
     return filename
 }

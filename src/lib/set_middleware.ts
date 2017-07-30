@@ -60,13 +60,9 @@ export default function(context: IContext, options: IConfiguration) {
         }
     }
 
-    function handleRequest(
-        filename: string,
-        processRequest: () => void,
-        req: express.Request) {
+    function handleRequest(filename: string, processRequest: () => void, req: express.Request) {
         // in lazy mode, rebuild on bundle request
-        const match = !options.filename || (options.filename as RegExp).test(filename)
-        if (options.lazy && match) {
+        if (options.lazy && (!options.filename || (options.filename as RegExp).test(filename))) {
             rebuild()
         }
 
