@@ -29,7 +29,7 @@ export default function(context: IContext, options: IConfiguration) {
 
         if (!options.noInfo && !options.quiet) {
             const info = req ? req.url : fn.name
-            options.log(`webpack: wait until bundle finished: ${info}`)
+            options.log!(`webpack: wait until bundle finished: ${info}`)
         }
         context.callbacks.push(fn)
     }

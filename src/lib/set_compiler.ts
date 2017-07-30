@@ -7,9 +7,9 @@ export default function setCompiler(context: IContext, options: IConfiguration) 
     // used by the compiler's run() and watch methods
     function reportCompilerError(err: any, stats?: webpack.Stats) {
         if (err) {
-            options.error(err.stack || err)
+            options.error!(err.stack || err)
             if (err.details) {
-                options.error(err.details)
+                options.error!(err.details)
             }
             return
         }
@@ -17,7 +17,7 @@ export default function setCompiler(context: IContext, options: IConfiguration) 
         if (stats) {
             const info = stats.toJson();
             if (stats.hasErrors()) {
-                options.error(info.errors)
+                options.error!(info.errors)
             }
         }
     }
@@ -62,7 +62,7 @@ export default function setCompiler(context: IContext, options: IConfiguration) 
 
     function compilerInvalid() {
         if (context.state && (!options.noInfo && !options.quiet)) {
-            options.log('webpack: state is true, called by invalid or watch-run or run...')
+            options.log!('webpack: state is true, called by invalid or watch-run or run...')
         }
 
         // We are now in invalid state

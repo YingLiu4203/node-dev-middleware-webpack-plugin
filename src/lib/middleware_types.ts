@@ -48,10 +48,10 @@ export interface IConfiguration extends IReporterConfig {
     headers?: { [key: string]: string },
 
     // report functions and reporter are initialized
-    log: FunctionVoid,
-    warn: FunctionVoid,
-    error: FunctionVoid,
-    reporter: ReportFunction,
+    log?: FunctionVoid,
+    warn?: FunctionVoid,
+    error?: FunctionVoid,
+    reporter?: ReportFunction,
 
     // Add custom mime/extension mappings
     // https://github.com/broofa/node-mime#mimedefine

@@ -35,11 +35,11 @@ function configReporter(options: IConfiguration) {
 
             if (displayStats) {
                 if (stats.hasErrors()) {
-                    options.error(stats.toString(stats));
+                    options.error!(stats.toString(stats));
                 } else if (stats.hasWarnings()) {
-                    options.warn(stats.toString(stats));
+                    options.warn!(stats.toString(stats));
                 } else {
-                    options.log(stats.toString(stats));
+                    options.log!(stats.toString(stats));
                 }
             }
 
@@ -50,10 +50,10 @@ function configReporter(options: IConfiguration) {
                 } else if (stats.hasWarnings()) {
                     msg = 'Compiled with warnings.'
                 }
-                options.log(time + 'webpack: ' + msg)
+                options.log!(time + 'webpack: ' + msg)
             }
         } else {
-            options.log(time + 'webpack: Compiling...')
+            options.log!(time + 'webpack: Compiling...')
         }
     }
 
