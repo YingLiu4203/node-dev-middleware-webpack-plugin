@@ -10,7 +10,7 @@ import { getFilename } from './file_helper'
 import getPathnameFromUrl from './get_pathname_from_url'
 import setMiddleware from './set_middleware'
 
-export default function(this: any, compiler: any, options: IConfiguration) {
+export default function(this: any, compiler: any, options = {} as IConfiguration) {
 
     initConfig(options)
     const context: IContext = setContext(compiler)

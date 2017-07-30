@@ -1,5 +1,6 @@
 /**
- * Join a prefix with pathname to have exactly one '/' between them
+ * Join a prefix with pathname to have one '/' between them.
+ * don't append '/' if b is undefined or empty.
  * @param {string} a The prefix
  * @param {string} [b] the pathname, not started with '/'
  * @returns A joined path with only one '/' between them
