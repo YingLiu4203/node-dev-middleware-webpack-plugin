@@ -1,10 +1,10 @@
 import { expect } from 'chai'
 import 'mocha'
 
-import getFilenameFromUrl from '../lib/get_filename_from_Url'
+import getPathnameFromUrl from '../lib/get_pathname_from_Url'
 
 function testUrl(options: any) {
-    const pathname = getFilenameFromUrl(options.publicPath, options, options.url)
+    const pathname = getPathnameFromUrl(options.publicPath, options, options.url)
     expect(pathname).eq(options.expected)
 }
 

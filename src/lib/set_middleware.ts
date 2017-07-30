@@ -6,7 +6,6 @@ import {
     IDevMiddleWare,
 } from './middleware_types'
 
-import getFilenameFromUrl from './get_filename_from_url'
 import setCompiler from './set_compiler'
 
 const HASH_REGEXP = /[0-9a-f]{10,}/
@@ -84,9 +83,6 @@ export default function(context: IContext, options: IConfiguration) {
         devMiddleware.waitUntilValid = waitUntilValid
         devMiddleware.invalidate = invalidate
         devMiddleware.close = close
-        devMiddleware.getFilenameFromUrl =
-            getFilenameFromUrl.bind(this, options.publicPath, context.compiler)
-        devMiddleware.fileSystem = context.fileSystem
     }
 
     return { ready, handleRequest, setProps }
