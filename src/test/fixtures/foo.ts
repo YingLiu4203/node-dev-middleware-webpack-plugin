@@ -3,4 +3,4 @@ require('./svg.svg')
 require('./index.html')
 
 // tslint:disable-next-line:no-console
-console.log('Foo')
+console.log('Foo.')

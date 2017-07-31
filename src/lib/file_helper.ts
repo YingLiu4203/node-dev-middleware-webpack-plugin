@@ -30,27 +30,24 @@ export function getFilename(
     pathname: string,
     fileSystem: any,
     index: string | boolean | undefined) {
-    let filename = pathname
     let stat: any = fileSystem.statSync(pathname)
-    if (!stat.isFile()) {
+    let filename = ''
+    if (stat.isFile()) {
+        filename = pathname
+    } else {
         if (stat.isDirectory()) {
             if (index === undefined || index === true) {
                 index = "index.html"
             }
 
             if (index) {
-                filename = joinPath(pathname, index as string)
-                stat = fileSystem.statSync(filename)
-                if (!stat.isFile()) {
-                    filename = ''
+                const indexFilename = joinPath(pathname, index as string)
+                stat = fileSystem.statSync(indexFilename)
+                if (stat.isFile()) {
+                    filename = indexFilename
                 }
-            } else {
-                // index is false in config
-                filename = ''
             }
         }
-    } else {
-        filename = ''
     }
     return filename
 }
