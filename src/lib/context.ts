@@ -19,17 +19,17 @@ function validOutputPath(compiler: any) {
 
 function getFs(compiler: any) {
     validOutputPath(compiler)
-    let filesystem = new MemoryFileSystem()
+    let fileSystem = new MemoryFileSystem()
     if (!compiler.compilers && compiler.outputFileSystem instanceof MemoryFileSystem) {
-        filesystem = compiler.outputFileSystem
+        fileSystem = compiler.outputFileSystem
     } else {
-        compiler.outputFileSystem = filesystem
+        compiler.outputFileSystem = fileSystem
     }
-    return filesystem
+    return fileSystem
 }
 
 export default function setContext(compiler: any): IContext {
-    const filesystem = getFs(compiler)
+    const fileSystem = getFs(compiler)
     return {
         state: false,
         webpackStats: undefined,
@@ -37,6 +37,6 @@ export default function setContext(compiler: any): IContext {
         compiler,
         watching: undefined,
         forceRebuild: false,
-        fileSystem: getFs(compiler),
+        fileSystem,
     }
 }

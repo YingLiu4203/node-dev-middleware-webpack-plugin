@@ -6,6 +6,7 @@ import {
     IDevMiddleWare,
 } from './middleware_types'
 
+import getPathnameFromUrl from './get_pathname_from_url'
 import setCompiler from './set_compiler'
 
 const HASH_REGEXP = /[0-9a-f]{10,}/
@@ -79,10 +80,16 @@ export default function(context: IContext, options: IConfiguration) {
         ready(processRequest, req)
     }
 
-    function setProps(this: any, devMiddleware: IDevMiddleWare) {
+    function setProps(devMiddleware: IDevMiddleWare) {
         devMiddleware.waitUntilValid = waitUntilValid
         devMiddleware.invalidate = invalidate
         devMiddleware.close = close
+
+        // for testing
+        devMiddleware.getPathnameFromUrl = getPathnameFromUrl.bind(
+            undefined, options.publicPath, context.compiler,
+        )
+        devMiddleware.fileSystem = context.fileSystem
     }
 
     return { ready, handleRequest, setProps }

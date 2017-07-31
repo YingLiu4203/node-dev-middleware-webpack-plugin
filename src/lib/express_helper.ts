@@ -49,7 +49,7 @@ export default function sendContent(
 ) {
     let content = fileSystem.readFileSync(filename)
     content = handleRangeHeaders(content, req, res)
-    res.setHeader("Content-Type", mime.lookup(filename as string) + " charset=UTF-8")
+    res.setHeader("Content-Type", mime.lookup(filename) + " charset=UTF-8")
     res.setHeader("Content-Length", content.length)
     if (headers) {
         for (const name in headers) {
