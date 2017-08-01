@@ -7,7 +7,7 @@
   "scripts": {
     "clean": "rm -rf dist",
     "cpx": "cpx \"src/**/*.{html,svg}\" dist",
-    "pretest": "npm run clean && npm run cpx && tsc --rootDir src --outDir dist",
+    "pretest": "npm run clean && npm run cpx && tsc",
     "test": "mocha dist/test"
   },
   "repository": {

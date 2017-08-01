@@ -10,23 +10,23 @@ import { getFilename } from './file_helper'
 import getPathnameFromUrl from './get_pathname_from_url'
 import setMiddleware from './set_middleware'
 
-export default function(this: any, compiler: any, options = {} as IConfiguration) {
+export default function(compiler: any, options = {} as IConfiguration) {
 
     initConfig(options)
     const context: IContext = setContext(compiler)
     const { ready, handleRequest, setProps } = setMiddleware(context, options)
 
     // The express middleware
-    const devMiddleware = ((
+    async function devMiddleware(
         req: express.Request,
         res: express.Response,
-        next: express.NextFunction) => {
+        next: express.NextFunction) {
 
         function goNext() {
             if (options.serverSideRender) {
-                return ready(() => {
+                return ready(async () => {
                     res.locals.webpackStats = context.webpackStats
-                    next()
+                    await next()
                 }, req)
             } else {
                 return next()
@@ -34,27 +34,28 @@ export default function(this: any, compiler: any, options = {} as IConfiguration
         }
 
         if (req.method !== "GET") {
-            return goNext()
+            await goNext()
+            return
         }
 
         const pathname = getPathnameFromUrl(options.publicPath, context.compiler, req.url)
         if (!pathname) {
-            return goNext()
+            await goNext()
+            return
         }
 
-        function processRequest() {
+        async function processRequest() {
             const filename = getFilename(pathname, context.fileSystem, options.index)
             if (filename) {
-                sendContent(filename, context.fileSystem, req, res, options.headers)
+                await sendContent(filename, context.fileSystem, req, res, options.headers)
             } else {
-                return goNext()
+                await goNext()
             }
         }
 
-        return handleRequest(pathname, processRequest, req)
+        await handleRequest(pathname, processRequest, req)
+    }
 
-    }) as IDevMiddleWare
-
-    setProps(devMiddleware)
-    return devMiddleware
+    setProps(devMiddleware as IDevMiddleWare)
+    return devMiddleware as IDevMiddleWare
 }

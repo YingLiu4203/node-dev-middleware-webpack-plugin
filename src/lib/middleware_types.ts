@@ -5,8 +5,6 @@ export type FunctionVoid = (...arg: any[]) => void
 
 export type WebpackStats = webpack.Stats & webpack.Stats.ToStringOptionsObject
 
-export type IAsyncFunctionVoid = (...arg: any[]) => Promise<void> | void
-
 export interface IReporterArgs {
     state: boolean,
     stats: WebpackStats,
@@ -28,7 +26,7 @@ export interface IReporterConfig {
 
 export interface IConfiguration extends IReporterConfig {
     // it has the same meaning as webpack's publicPath
-    publicPath: string,
+    publicPath?: string,
 
     filename?: string | RegExp,
 

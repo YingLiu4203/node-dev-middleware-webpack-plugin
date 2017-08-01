@@ -48,7 +48,7 @@ function getPaths(publicPath: string, compiler: any, url: string) {
  * @param {string} The request url.
  * @returns {string} The local filename requested by the url. Return an empty string if not matched.
  */
-export default function(cofigPublicPath: string, compiler: any, url: string): string {
+export default function(cofigPublicPath = '/', compiler: any, url: string): string {
     const {publicPath, outputPath} = getPaths(cofigPublicPath, compiler, url)
 
     // use classic parse API to handle path without a base

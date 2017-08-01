@@ -24,6 +24,7 @@ export default function(context: IContext, options: IConfiguration) {
      * @param req the epxress request
      */
     function ready(fn: FunctionVoid, req?: express.Request) {
+        console.log(`in ready(): state: ${context.state}`)
         if (context.state) {
             return fn(context.webpackStats)
         }
@@ -60,7 +61,7 @@ export default function(context: IContext, options: IConfiguration) {
         }
     }
 
-    function handleRequest(filename: string, processRequest: () => void, req: express.Request) {
+    async function handleRequest(filename: string, processRequest: () => void, req: express.Request) {
         // in lazy mode, rebuild on bundle request
         if (options.lazy && (!options.filename || (options.filename as RegExp).test(filename))) {
             rebuild()
@@ -70,7 +71,7 @@ export default function(context: IContext, options: IConfiguration) {
         if (HASH_REGEXP.test(filename)) {
             try {
                 if (context.fileSystem.statSync(filename).isFile()) {
-                    processRequest()
+                    await processRequest()
                     return
                 }
                 // tslint:disable-next-line:no-empty

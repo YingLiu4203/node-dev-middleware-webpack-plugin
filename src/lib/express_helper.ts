@@ -10,8 +10,7 @@ function handleRangeHeaders(
     res.setHeader('Accept-Ranges', 'bytes')
     if (req.headers.range) {
         // TODO the req.headers.range migth be string[]
-        const ranges = parseRange(content.length,
-            req.headers.range as string)
+        const ranges = parseRange(content.length, req.headers.range as string)
 
         // unsatisfiable
         if (parseRange.Result.unsatisifiable === ranges) {
@@ -40,7 +39,7 @@ function handleRangeHeaders(
     return content
 }
 
-export default function sendContent(
+export default async function sendContent(
     filename: string,
     fileSystem: any,
     req: express.Request,
@@ -59,5 +58,5 @@ export default function sendContent(
         }
     }
 
-    res.send(content)
+    await res.send(content)
 }
