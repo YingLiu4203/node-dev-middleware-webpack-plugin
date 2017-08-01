@@ -39,7 +39,7 @@ function handleRangeHeaders(
     return content
 }
 
-export default async function sendContent(
+export default function sendContent(
     filename: string,
     fileSystem: any,
     req: express.Request,
@@ -58,5 +58,5 @@ export default async function sendContent(
         }
     }
 
-    await res.send(content)
+    res.send(content)
 }

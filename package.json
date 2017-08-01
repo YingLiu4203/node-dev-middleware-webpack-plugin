@@ -6,8 +6,8 @@
   "types": "dist/middleware.d.ts",
   "scripts": {
     "clean": "rm -rf dist",
-    "cpx": "cpx \"src/**/*.{html,svg}\" dist",
-    "pretest": "npm run clean && npm run cpx && tsc",
+    "copy": "cpx \"src/**/*.{html,svg}\" dist",
+    "build": "tsc",
     "test": "mocha dist/test"
   },
   "repository": {

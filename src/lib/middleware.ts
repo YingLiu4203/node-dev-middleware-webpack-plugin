@@ -17,16 +17,16 @@ export default function(compiler: any, options = {} as IConfiguration) {
     const { ready, handleRequest, setProps } = setMiddleware(context, options)
 
     // The express middleware
-    async function devMiddleware(
+    function devMiddleware(
         req: express.Request,
         res: express.Response,
         next: express.NextFunction) {
 
         function goNext() {
             if (options.serverSideRender) {
-                return ready(async () => {
+                return ready(() => {
                     res.locals.webpackStats = context.webpackStats
-                    await next()
+                    next()
                 }, req)
             } else {
                 return next()
@@ -34,26 +34,24 @@ export default function(compiler: any, options = {} as IConfiguration) {
         }
 
         if (req.method !== "GET") {
-            await goNext()
-            return
+            return goNext()
         }
 
         const pathname = getPathnameFromUrl(options.publicPath, context.compiler, req.url)
         if (!pathname) {
-            await goNext()
-            return
+            return goNext()
         }
 
-        async function processRequest() {
+        function processRequest() {
             const filename = getFilename(pathname, context.fileSystem, options.index)
             if (filename) {
-                await sendContent(filename, context.fileSystem, req, res, options.headers)
+                sendContent(filename, context.fileSystem, req, res, options.headers)
             } else {
-                await goNext()
+                goNext()
             }
         }
 
-        await handleRequest(pathname, processRequest, req)
+        handleRequest(pathname, processRequest, req)
     }
 
     setProps(devMiddleware as IDevMiddleWare)

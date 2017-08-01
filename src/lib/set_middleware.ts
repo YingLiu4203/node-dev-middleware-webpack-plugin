@@ -24,14 +24,13 @@ export default function(context: IContext, options: IConfiguration) {
      * @param req the epxress request
      */
     function ready(fn: FunctionVoid, req?: express.Request) {
-        console.log(`in ready(): state: ${context.state}`)
         if (context.state) {
             return fn(context.webpackStats)
         }
 
         if (!options.noInfo && !options.quiet) {
             const info = req ? req.url : fn.name
-            options.log!(`webpack: wait until bundle finished: ${info}`)
+            options.log!(`dev-middleware: wait until bundle finished: ${info}`)
         }
         context.callbacks.push(fn)
     }
@@ -61,18 +60,17 @@ export default function(context: IContext, options: IConfiguration) {
         }
     }
 
-    async function handleRequest(filename: string, processRequest: () => void, req: express.Request) {
+    function handleRequest(pathname: string, processRequest: () => void, req: express.Request) {
         // in lazy mode, rebuild on bundle request
-        if (options.lazy && (!options.filename || (options.filename as RegExp).test(filename))) {
+        if (options.lazy && (!options.filename || (options.filename as RegExp).test(pathname))) {
             rebuild()
         }
 
         // don't block existing files with a hashed name
-        if (HASH_REGEXP.test(filename)) {
+        if (HASH_REGEXP.test(pathname)) {
             try {
-                if (context.fileSystem.statSync(filename).isFile()) {
-                    await processRequest()
-                    return
+                if (context.fileSystem.statSync(pathname).isFile()) {
+                    return processRequest()
                 }
                 // tslint:disable-next-line:no-empty
             } catch (e) {

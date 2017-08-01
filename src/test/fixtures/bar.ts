@@ -1,2 +1,2 @@
 // tslint:disable-next-line:no-console
-console.log("Bar")
+console.log('Bar')

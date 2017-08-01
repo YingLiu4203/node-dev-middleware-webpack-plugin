@@ -5,8 +5,7 @@ import { IConfiguration, IContext, WebpackStats } from './middleware_types'
 export default function setCompiler(context: IContext, options: IConfiguration) {
 
     // compiler call this function to report its results
-    function processRunResult(err: any, stats?: webpack.Stats) {
-        console.log(`in report compiler run error: ${err}`)
+    function handleCompileResult(err: any, stats?: webpack.Stats) {
         if (err) {
             options.error!(err.stack || err)
             if (err.details) {
@@ -16,10 +15,9 @@ export default function setCompiler(context: IContext, options: IConfiguration) 
     }
 
     function rebuild() {
-        console.log('rebuild state: ${context.state}')
         if (context.state) {
             context.state = false
-            context.compiler.run(processRunResult)
+            context.compiler.run(handleCompileResult)
         } else {
             context.forceRebuild = true
         }
@@ -28,7 +26,6 @@ export default function setCompiler(context: IContext, options: IConfiguration) 
     function compilerDone(stats: WebpackStats) {
         context.state = true
         context.webpackStats = stats
-        console.log('in compile done')
         // Do the stuff in nextTick, because bundle may be invalidated
         // if a change may happen in rebuild
         process.nextTick(() => {
@@ -45,7 +42,6 @@ export default function setCompiler(context: IContext, options: IConfiguration) 
             const cbs = context.callbacks
             context.callbacks = []
             cbs.forEach( (cb) => {
-                console.log(`run saved callback: ${cb.name}`)
                 cb(stats)
             })
         })
@@ -58,8 +54,6 @@ export default function setCompiler(context: IContext, options: IConfiguration) 
     }
 
     function compilerRun() {
-        console.log('in compilerRun')
-        console.log('in compiler Watch Run')
         if (context.state && (!options.noInfo && !options.quiet)) {
             options.log!('webpack: state is true, called by watch-run or run...')
         }
@@ -70,32 +64,11 @@ export default function setCompiler(context: IContext, options: IConfiguration) 
         // resolve async
         if (arguments.length === 2 && typeof arguments[1] === "function") {
             const callback = arguments[1]
-            console.log(`callback name: ${callback.name}`)
-            callback()
-        }
-    }
-
-    function compilerWatchRun() {
-        console.log('in compiler Watch Run')
-        console.log(`arguments length: ${arguments.length}`)
-        if (context.state && (!options.noInfo && !options.quiet)) {
-            options.log!('webpack: state is true, called by watch-run or run...')
-        }
-
-        // We are now in invalid state
-        context.state = false
-
-        // resolve async
-        if (arguments.length === 2 && typeof arguments[1] === "function") {
-            const callback = arguments[1]
-            console.log(`callback name: ${callback.name}`)
             callback()
         }
     }
 
     function compilerInvalid(filename: string, changeTime: any) {
-        console.log(`In compilerInvalid. file: ${filename}  Time: ${changeTime}`)
-        console.log(`arguments length: ${arguments.length}`)
         if (context.state && (!options.noInfo && !options.quiet)) {
             options.log!('webpack: state is true, called by invalid or watch-run or run...')
         }
@@ -107,7 +80,7 @@ export default function setCompiler(context: IContext, options: IConfiguration) 
     function setPlugins() {
         context.compiler.plugin('done', compilerDone)
         context.compiler.plugin('invalid', compilerInvalid)
-        context.compiler.plugin('watch-run', compilerWatchRun)
+        context.compiler.plugin('watch-run', compilerRun)
         context.compiler.plugin('run', compilerRun)
     }
 
@@ -116,7 +89,7 @@ export default function setCompiler(context: IContext, options: IConfiguration) 
         if (options.lazy) {
             context.state = true
         } else {
-            context.watching = compiler.watch(options.watchOptions, processRunResult)
+            context.watching = compiler.watch(options.watchOptions, handleCompileResult)
         }
     }
 

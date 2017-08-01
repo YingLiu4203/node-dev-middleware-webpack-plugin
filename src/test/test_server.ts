@@ -45,10 +45,11 @@ describe('server', () => {
                 quiet: true,
                 publicPath: '/public/',
             })
-            app.use(instance)
-            server = listenShorthand(done)
             // Hack to add a mock HMR json file to the in-memory filesystem.
             instance.fileSystem.writeFileSync('/123a123412.hot-update.json', '[\"hi\"]')
+
+            app.use(instance)
+            server = listenShorthand(done)
         })
 
         after(close)
@@ -58,7 +59,7 @@ describe('server', () => {
                 .expect('Content-Type', 'application/javascript; charset=UTF-8')
                 .expect(200, /console\.log\('Foo\.'\)/, done)
         })
-/*
+
         it('POST request to bundle file returns 404', (done) => {
             request(app).post(bundleFilename).expect(404, done)
         })
@@ -108,9 +109,8 @@ describe('server', () => {
                 .expect('Content-Type', 'text/html; charset=utf-8')
                 .expect(404, done)
         })
-            */
     })
-/*
+
     describe('no index mode', () => {
         before((done) => {
             app = express()
@@ -158,7 +158,7 @@ describe('server', () => {
             const compiler = webpack(webpackConfig)
             const instance = middleware(compiler, {
                 stats: 'errors-only' as webpack.Stats.Preset,
-                quiet: false,
+                quiet: true,
                 index: 'Index.phtml',
                 mimeTypes: {
                     'text/html': ['phtml'],
@@ -177,8 +177,7 @@ describe('server', () => {
                 .expect(200, done)
         })
     })
-*/
-/*
+
     describe('MultiCompiler', () => {
         before((done) => {
             app = express()
@@ -194,9 +193,11 @@ describe('server', () => {
         after(close)
 
         it('request to both bundle files', (done) => {
-            request(app).get('/js2/bar.js')
-                .expect(200, done)
+            request(app).get("/js1/foo.js")
+                .expect(200, () => {
+                    request(app).get("/js2/bar.js")
+                        .expect(200, done)
+                })
         })
     })
-    */
 })
