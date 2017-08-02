@@ -193,10 +193,39 @@ describe('server', () => {
         after(close)
 
         it('request to both bundle files', (done) => {
-            request(app).get("/js1/foo.js")
+            request(app).get('/js1/foo.js')
                 .expect(200, () => {
-                    request(app).get("/js2/bar.js")
+                    request(app).get('/js2/bar.js')
                         .expect(200, done)
+                })
+        })
+    })
+
+    describe("server side render", () => {
+        let locals: any
+        before((done) => {
+            app = express()
+            const compiler = webpack(webpackConfig)
+            app.use(middleware(compiler, {
+                stats: "errors-only",
+                quiet: true,
+                serverSideRender: true,
+            }))
+            app.use((req, res) => {
+                locals = res.locals
+                res.sendStatus(200)
+            })
+            server = listenShorthand(done)
+        })
+        after(close)
+
+        it('request to bundle file', (done) => {
+            // get unexisted path to call the test middleware that sets the locals
+            request(app).get('/foo/bar')
+                .expect(200, () => {
+                    // tslint:disable-next-line:no-unused-expression
+                    expect(locals.webpackStats).to.exist
+                    done()
                 })
         })
     })
