@@ -15,11 +15,11 @@ function configReporter(options: IConfiguration) {
     }
 
     if (typeof options.error !== 'function') {
-        options.error = console.log.bind(console)
+        options.error = console.error.bind(console)
     }
 
     const defaultReporter: ReportFunction = (args) => {
-        const { state, stats, options: rptOptions } = args
+        const { state, stats: optionalStats, options: rptOptions } = args
 
         let time: string = ''
         if (rptOptions.reportTime) {
@@ -27,6 +27,8 @@ function configReporter(options: IConfiguration) {
         }
 
         if (state) {
+            // stats must be valid when state is true
+            const stats = optionalStats!
             let displayStats = !rptOptions.quiet && stats
             const isNormal = !(stats.hasErrors() || stats.hasWarnings())
             if (isNormal && rptOptions.noInfo) {

@@ -7,7 +7,7 @@ export type WebpackStats = webpack.Stats & webpack.Stats.ToStringOptionsObject
 
 export interface IReporterArgs {
     state: boolean,
-    stats: WebpackStats,
+    stats?: WebpackStats,
     options: IReporterConfig,
 }
 

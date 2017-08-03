@@ -41,7 +41,7 @@ export default function setCompiler(context: IContext, options: IConfiguration) 
             // execute callback that are delayed
             const cbs = context.callbacks
             context.callbacks = []
-            cbs.forEach( (cb) => {
+            cbs.forEach((cb) => {
                 cb(stats)
             })
         })
@@ -54,8 +54,9 @@ export default function setCompiler(context: IContext, options: IConfiguration) 
     }
 
     function compilerRun() {
-        if (context.state && (!options.noInfo && !options.quiet)) {
-            options.log!('webpack: state is true, called by watch-run or run...')
+        const { reportTime, noInfo, quiet } = options
+        if (context.state && (!noInfo && !quiet)) {
+            options.reporter!({ state: false, options: { reportTime, noInfo, quiet } })
         }
 
         // We are now in invalid state
@@ -68,18 +69,9 @@ export default function setCompiler(context: IContext, options: IConfiguration) 
         }
     }
 
-    function compilerInvalid(filename: string, changeTime: any) {
-        if (context.state && (!options.noInfo && !options.quiet)) {
-            options.log!('webpack: state is true, called by invalid or watch-run or run...')
-        }
-
-        // We are now in invalid state
-        context.state = false
-    }
-
     function setPlugins() {
         context.compiler.plugin('done', compilerDone)
-        context.compiler.plugin('invalid', compilerInvalid)
+        context.compiler.plugin('invalid', compilerRun)
         context.compiler.plugin('watch-run', compilerRun)
         context.compiler.plugin('run', compilerRun)
     }
