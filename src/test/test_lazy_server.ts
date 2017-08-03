@@ -78,9 +78,9 @@ describe('Lazy mode', () => {
             compiler.run.callsArgWith(0, error)
 
             instance(req, res, next)
-            expect((console.error as any).callCount).to.equal(1)
+            expect(consoleStub.callCount).to.equal(1)
             // tslint:disable-next-line:no-unused-expression
-            expect((console.error as any).calledWith(error.stack)).to.be.true
+            expect(consoleStub.calledWith(error.stack)).to.be.true
 
             done()
         })
