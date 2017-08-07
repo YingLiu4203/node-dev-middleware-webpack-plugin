@@ -29,7 +29,7 @@ function configReporter(options: IConfiguration) {
         if (state) {
             // stats must be valid when state is true
             const stats = optionalStats!
-            let displayStats = !rptOptions.quiet && stats
+            let displayStats = !rptOptions.quiet && options.stats !== false
             const isNormal = !(stats.hasErrors() || stats.hasWarnings())
             if (isNormal && rptOptions.noInfo) {
                 displayStats = false

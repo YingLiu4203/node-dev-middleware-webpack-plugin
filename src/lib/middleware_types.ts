@@ -80,13 +80,13 @@ export interface IDevMiddleWare {
     (req: express.Request, res: express.Response, next: express.NextFunction): any,
 
     //  executes the callback if the bundle is valid or after it is valid again
-    waitUntilValid: (fn: FunctionVoid) => void,
+    waitUntilValid: (fn?: FunctionVoid) => void,
 
     // recompile the bundle - e.g. after you changed the configuration
-    invalidate: (fn: FunctionVoid) => void,
+    invalidate: (fn?: FunctionVoid) => void,
 
     // stop watching for file changes
-    close: (fn: FunctionVoid) => void,
+    close: (fn?: FunctionVoid) => void,
 
     // For testing, the MemroryFileSystem
     fileSystem: any,

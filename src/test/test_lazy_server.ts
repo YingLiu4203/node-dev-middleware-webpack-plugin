@@ -16,7 +16,6 @@ const doneStats = {
     },
 }
 
-
 describe('Lazy mode', () => {
     let instance: any
     let next: any
